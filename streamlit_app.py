@@ -146,9 +146,9 @@ with col2:
     st.write(f"Lowest score: **{lowest_score} points** by **{lowest_score_player}** (GW {lowest_score_gameweek})")
 
     # Worst all-time Gameweek rank (percentage)
-    worst_rank = percentile_ranks_df.max().max()
+    worst_rank = 100-percentile_ranks_df.max().max()
     worst_rank_player = percentile_ranks_df.max().idxmax()
-    worst_rank_gameweek = 100-percentile_ranks_df[worst_rank_player].idxmax()
+    worst_rank_gameweek = percentile_ranks_df[worst_rank_player].idxmax()
     st.write(f"Worst rank: lowest **{worst_rank:.2f}%** by **{worst_rank_player}** (GW {worst_rank_gameweek})")
 
     # Longest streak of not beating the average
