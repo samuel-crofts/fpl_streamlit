@@ -6,10 +6,10 @@ import numpy as np
 
 # Player IDs and names
 players = {
-    7326724: "Sam",
-    7292048: "Pierre",
-    7321581: "Jackson",
-    7361093: "Jerome",
+    7326724: "A Macallan please",
+    7292048: "Super Mik Arteta",
+    7321581: "Son and Sons",
+    7361093: "VBLooongNeck",
     7313074: "Dan"
 }
 
