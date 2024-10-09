@@ -165,7 +165,7 @@ with st.expander("Additional Statistics"):
         st.dataframe(total_transfers.to_frame(name='Total Transfers'))
 
     with col4:
-        # Number of times each player beats the average
+        # Number of times each player has beaten the average
         st.subheader('Times Above Average')
         beats_average = (weekly_df.subtract(game_df['Average'], axis=0) > 0).sum().sort_values(ascending=False)
         st.dataframe(beats_average.to_frame(name='Times Above Average'))
