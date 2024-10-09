@@ -3,13 +3,17 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
+from io import BytesIO
+
+st.set_page_config(layout="wide", page_title="We Hate City")
 
 # Player IDs and names
 players = {
-    7326724: "A Macallan please",
-    7292048: "Super Mik Arteta",
-    7321581: "Son and Sons",
-    7361093: "VBLooongNeck",
+    7326724: "Sam",
+    7292048: "Pierre",
+    7321581: "Jackson",
+    7361093: "Jerome",
     7313074: "Dan"
 }
 
@@ -74,17 +78,26 @@ current_gameweek = weekly_df.index.max()
 game_df = game_df.loc[:current_gameweek]
 
 st.subheader('Cumulative FPL Score Relative to Average')
-fig, ax = plt.subplots(figsize=(12, 6))
+
+# Determine if the device is mobile
+is_mobile = st.checkbox('Mobile view', value=False)
+
+# Adjust plot size based on device
+fig_width = 6 if is_mobile else 12
+fig_height = 4 if is_mobile else 6
+
+fig, ax = plt.subplots(figsize=(fig_width, fig_height))
 
 for player in players.values():
     relative_scores = (df[player] - game_df['Average'].cumsum()).fillna(0)
     ax.plot(df.index, relative_scores, label=player)
 
 ax.axhline(y=0, color='k', linestyle='--', label='Game Average')
-ax.set_xlabel('Gameweek')
-ax.set_ylabel('Points Relative to Average')
-ax.legend()
+ax.set_xlabel('Gameweek', fontsize=8 if is_mobile else 10)
+ax.set_ylabel('Points Relative to Average', fontsize=8 if is_mobile else 10)
+ax.legend(fontsize=8 if is_mobile else 10)
 ax.grid(True)
+ax.tick_params(axis='both', which='major', labelsize=8 if is_mobile else 10)
 
 st.pyplot(fig)
 
@@ -98,57 +111,66 @@ rankings_df['Player'] = rankings_df.apply(lambda row: f"🥃 {row['Player']}" if
 rankings_df = rankings_df.set_index('Rank')
 st.dataframe(rankings_df[['Player', 'Total Points']])
 
-st.header('🏆 Big Winners')
+col1, col2 = st.columns(2)
 
-# Highest all-time Gameweek score
-highest_score = weekly_df.max().max()
-highest_score_player = weekly_df.max().idxmax()
-highest_score_gameweek = weekly_df[highest_score_player].idxmax()
-st.write(f"The highest all-time Gameweek score is **{highest_score} points**, achieved by **{highest_score_player}** in Gameweek {highest_score_gameweek}.")
+with col1:
+    st.header('🏆 Big Winners')
 
-# Calculate percentile ranks
-percentile_ranks_df = ranks_df.div(game_df['ranked_count'], axis=0) * 100
+    # Highest all-time Gameweek score
+    highest_score = weekly_df.max().max()
+    highest_score_player = weekly_df.max().idxmax()
+    highest_score_gameweek = weekly_df[highest_score_player].idxmax()
+    st.write(f"Highest score: **{highest_score} points** by **{highest_score_player}** (GW {highest_score_gameweek})")
 
-# Best all-time Gameweek rank (percentage)
-best_rank = percentile_ranks_df.min().min()
-best_rank_player = percentile_ranks_df.min().idxmin()
-best_rank_gameweek = percentile_ranks_df[best_rank_player].idxmin()
-st.write(f"The best gameweek rank was the top **{best_rank:.2f}%** of players, achieved by **{best_rank_player}** in Gameweek {best_rank_gameweek}.")
+    # Calculate percentile ranks
+    percentile_ranks_df = ranks_df.div(game_df['ranked_count'], axis=0) * 100
 
-# Longest streak of beating the average
-beats_average_df = weekly_df.subtract(game_df['Average'], axis=0) > 0
-longest_streak_player, longest_streak, _, _ = get_longest_streak(beats_average_df)
-st.write(f"The longest consecutive streak of beating the average is **{longest_streak} gameweeks**, achieved by **{longest_streak_player}**.")
+    # Best all-time Gameweek rank (percentage)
+    best_rank = percentile_ranks_df.min().min()
+    best_rank_player = percentile_ranks_df.min().idxmin()
+    best_rank_gameweek = percentile_ranks_df[best_rank_player].idxmin()
+    st.write(f"Best rank: top **{best_rank:.2f}%** by **{best_rank_player}** (GW {best_rank_gameweek})")
 
-st.header('💩 Big Losers')
+    # Longest streak of beating the average
+    beats_average_df = weekly_df.subtract(game_df['Average'], axis=0) > 0
+    longest_streak_player, longest_streak, _, _ = get_longest_streak(beats_average_df)
+    st.write(f"Longest winning streak: **{longest_streak} GWs** by **{longest_streak_player}**")
 
-# Lowest all-time Gameweek score
-lowest_score = weekly_df.min().min()
-lowest_score_player = weekly_df.min().idxmin()
-lowest_score_gameweek = weekly_df[lowest_score_player].idxmin()
-st.write(f"The lowest all-time Gameweek score is **{lowest_score} points**, achieved by **{lowest_score_player}** in Gameweek {lowest_score_gameweek}.")
+with col2:
+    st.header('💩 Big Losers')
 
-# Worst all-time Gameweek rank (percentage)
-worst_rank = percentile_ranks_df.max().max()
-worst_rank_player = percentile_ranks_df.max().idxmax()
-worst_rank_gameweek = percentile_ranks_df[worst_rank_player].idxmax()
-st.write(f"The worst gameweek rank was the lowest **{worst_rank:.2f}%** of players, achieved by **{worst_rank_player}** in Gameweek {worst_rank_gameweek}.")
+    # Lowest all-time Gameweek score
+    lowest_score = weekly_df.min().min()
+    lowest_score_player = weekly_df.min().idxmin()
+    lowest_score_gameweek = weekly_df[lowest_score_player].idxmin()
+    st.write(f"Lowest score: **{lowest_score} points** by **{lowest_score_player}** (GW {lowest_score_gameweek})")
 
-# Longest streak of not beating the average
-_, _, longest_losing_streak_player, longest_losing_streak = get_longest_streak(beats_average_df)
-st.write(f"The longest consecutive streak of not beating the average is **{longest_losing_streak} gameweeks**, achieved by **{longest_losing_streak_player}**.")
+    # Worst all-time Gameweek rank (percentage)
+    worst_rank = percentile_ranks_df.max().max()
+    worst_rank_player = percentile_ranks_df.max().idxmax()
+    worst_rank_gameweek = percentile_ranks_df[worst_rank_player].idxmax()
+    st.write(f"Worst rank: lowest **{worst_rank:.2f}%** by **{worst_rank_player}** (GW {worst_rank_gameweek})")
 
-# Total transfers per player
-st.subheader('Total Transfers per Player')
-total_transfers = transfers_df.sum().sort_values(ascending=False)
-st.dataframe(total_transfers.to_frame(name='Total Transfers'))
+    # Longest streak of not beating the average
+    _, _, longest_losing_streak_player, longest_losing_streak = get_longest_streak(beats_average_df)
+    st.write(f"Longest losing streak: **{longest_losing_streak} GWs** by **{longest_losing_streak_player}**")
 
-# Number of times each player has beaten the average
-st.subheader('Number of Times Each Player Beats the Average')
-beats_average = (weekly_df.subtract(game_df['Average'], axis=0) > 0).sum().sort_values(ascending=False)
-st.dataframe(beats_average.to_frame(name='Times Above Average'))
+with st.expander("Additional Statistics"):
+    col3, col4 = st.columns(2)
 
-# Display weekly scores table with game average
-st.subheader('Weekly Scores Table (with Game Average)')
-combined_weekly_df = weekly_df.join(game_df['Average'])
-st.dataframe(combined_weekly_df)
+    with col3:
+        # Total transfers per player
+        st.subheader('Total Transfers per Player')
+        total_transfers = transfers_df.sum().sort_values(ascending=False)
+        st.dataframe(total_transfers.to_frame(name='Total Transfers'))
+
+    with col4:
+        # Number of times each player beats the average
+        st.subheader('Times Above Average')
+        beats_average = (weekly_df.subtract(game_df['Average'], axis=0) > 0).sum().sort_values(ascending=False)
+        st.dataframe(beats_average.to_frame(name='Times Above Average'))
+
+    # Display weekly scores table with game average
+    st.subheader('Weekly Scores Table (with Game Average)')
+    combined_weekly_df = weekly_df.join(game_df['Average'])
+    st.dataframe(combined_weekly_df)
