@@ -134,7 +134,7 @@ with col1:
     # Longest streak of beating the average
     beats_average_df = weekly_df.subtract(game_df['Average'], axis=0) > 0
     longest_streak_player, longest_streak, _, _ = get_longest_streak(beats_average_df)
-    st.write(f"Longest winning streak: **{longest_streak} GWs** by **{longest_streak_player}**")
+    st.write(f"Longest streak above average: **{longest_streak} GWs** by **{longest_streak_player}**")
 
 with col2:
     st.header('💩 Big Losers')
@@ -153,7 +153,7 @@ with col2:
 
     # Longest streak of not beating the average
     _, _, longest_losing_streak_player, longest_losing_streak = get_longest_streak(beats_average_df)
-    st.write(f"Longest losing streak: **{longest_losing_streak} GWs** by **{longest_losing_streak_player}**")
+    st.write(f"Longest streak below average: **{longest_losing_streak} GWs** by **{longest_losing_streak_player}**")
 
 with st.expander("Additional Statistics"):
     col3, col4 = st.columns(2)
